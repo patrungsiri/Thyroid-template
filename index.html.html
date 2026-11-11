@@ -1,0 +1,1734 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Thyroid Ultrasound Reporting System &amp; ACR TI-RADS Calculator</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Inter', 'Sarabun', sans-serif;
+      background-color: #f1f5f9;
+      color: #0f172a;
+    }
+    .report-mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
+    @media print {
+      .no-print {
+        display: none !important;
+      }
+      .print-only {
+        display: block !important;
+      }
+      body {
+        background: #ffffff;
+      }
+    }
+    mark.spell-error {
+      background-color: #fee2e2;
+      color: #991b1b;
+      border-bottom: 2px wavy #ef4444;
+      padding: 0 2px;
+      border-radius: 2px;
+    }
+    mark.spell-warn {
+      background-color: #fef3c7;
+      color: #92400e;
+      border-bottom: 2px wavy #f59e0b;
+      padding: 0 2px;
+      border-radius: 2px;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+  <!-- Top Navigation Header -->
+  <header class="bg-slate-900 text-white border-b border-slate-800 sticky top-0 z-30 no-print shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-teal-500/20 border border-teal-400/40 flex items-center justify-center text-teal-300 font-bold text-lg">
+          US
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-base sm:text-lg font-bold tracking-tight">Thyroid Ultrasound Reporting &amp; ACR TI-RADS</h1>
+            <span class="hidden sm:inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-teal-500/20 text-teal-300 border border-teal-500/30">
+              ACR 2017 Lexicon
+            </span>
+          </div>
+          <p class="text-xs text-slate-400">
+            Structured Template • Auto TI-RADS Calculator • Medical Spell Check • Live Report Preview
+          </p>
+        </div>
+      </div>
+
+      <!-- Main View Switcher & Preset Controls -->
+      <div class="flex flex-wrap items-center gap-2">
+        <div class="inline-flex rounded-lg bg-slate-800 p-1 border border-slate-700">
+          <button type="button" id="tabBtnWorkspace" onclick="switchMainTab('workspace')" class="px-3 py-1.5 rounded-md text-xs font-medium transition bg-teal-600 text-white shadow-sm">
+            Report Builder
+          </button>
+          <button type="button" id="tabBtnReference" onclick="switchMainTab('reference')" class="px-3 py-1.5 rounded-md text-xs font-medium transition text-slate-300 hover:text-white">
+            TI-RADS Reference
+          </button>
+          <button type="button" id="tabBtnCode" onclick="switchMainTab('code')" class="px-3 py-1.5 rounded-md text-xs font-medium transition text-slate-300 hover:text-white">
+            Website Code
+          </button>
+        </div>
+
+        <button type="button" onclick="loadSampleCase()" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition" title="โหลดข้อมูลตัวอย่าง M1-M4 ตามต้นฉบับ">
+          Reset Sample (M1–M4)
+        </button>
+        <button type="button" onclick="loadNormalTemplate()" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition" title="เริ่มเคสใหม่ (Normal Thyroid)">
+          New Normal Case
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Toast Notification Banner -->
+  <div id="toastBanner" class="fixed bottom-5 right-5 z-50 hidden transform transition-all duration-200 no-print">
+    <div class="bg-slate-900 text-white px-4 py-3 rounded-xl shadow-xl border border-slate-700 flex items-center gap-3">
+      <span id="toastIcon" class="w-2.5 h-2.5 rounded-full bg-teal-400"></span>
+      <span id="toastMessage" class="text-sm font-medium">Copied to clipboard!</span>
+    </div>
+  </div>
+
+  <!-- MAIN WORKSPACE VIEW -->
+  <main id="viewWorkspace" class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6">
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+      <!-- LEFT COLUMN: Structured Template & Nodule TI-RADS Builder (7 cols) -->
+      <div class="lg:col-span-7 space-y-5 no-print">
+
+        <!-- Section 1: Clinical History & Comparative Study -->
+        <section class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+          <div class="bg-slate-50 px-4 py-3 border-b border-slate-200 flex items-center justify-between">
+            <h2 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+              <span class="w-6 h-6 rounded-md bg-teal-100 text-teal-800 flex items-center justify-center text-xs font-bold">1</span>
+              Header, History &amp; Comparative Study
+            </h2>
+            <span class="text-xs text-slate-500">Spellcheck enabled</span>
+          </div>
+          <div class="p-4 space-y-4">
+            <div>
+              <label for="reportTitleInput" class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Report Header</label>
+              <input id="reportTitleInput" type="text" spellcheck="true" value="ULTRASOUND OF THYROID GLAND" oninput="handleFormChange()" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-500" />
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <div class="flex items-center justify-between mb-1">
+                  <label for="historyInput" class="block text-xs font-semibold text-slate-600 uppercase tracking-wider">HISTORY</label>
+                  <span class="text-[11px] text-slate-400">Quick presets below</span>
+                </div>
+                <input id="historyInput" type="text" spellcheck="true" value="Hyperparathyroidism." oninput="handleFormChange()" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-500" />
+                <div class="flex flex-wrap gap-1.5 mt-2">
+                  <button type="button" onclick="setFieldValue('historyInput', 'Hyperparathyroidism.')" class="px-2 py-0.5 text-[11px] rounded bg-slate-100 hover:bg-teal-50 hover:text-teal-700 text-slate-600 border border-slate-200 transition">Hyperparathyroidism</button>
+                  <button type="button" onclick="setFieldValue('historyInput', 'Palpable neck mass.')" class="px-2 py-0.5 text-[11px] rounded bg-slate-100 hover:bg-teal-50 hover:text-teal-700 text-slate-600 border border-slate-200 transition">Palpable mass</button>
+                  <button type="button" onclick="setFieldValue('historyInput', 'Follow-up thyroid nodules.')" class="px-2 py-0.5 text-[11px] rounded bg-slate-100 hover:bg-teal-50 hover:text-teal-700 text-slate-600 border border-slate-200 transition">F/U nodules</button>
+                  <button type="button" onclick="setFieldValue('historyInput', 'Check-up.')" class="px-2 py-0.5 text-[11px] rounded bg-slate-100 hover:bg-teal-50 hover:text-teal-700 text-slate-600 border border-slate-200 transition">Check-up</button>
+                </div>
+              </div>
+
+              <div>
+                <div class="flex items-center justify-between mb-1">
+                  <label for="comparativeInput" class="block text-xs font-semibold text-slate-600 uppercase tracking-wider">COMPARATIVE STUDY</label>
+                </div>
+                <input id="comparativeInput" type="text" spellcheck="true" value="None" oninput="handleFormChange()" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-500" />
+                <div class="flex flex-wrap gap-1.5 mt-2">
+                  <button type="button" onclick="setFieldValue('comparativeInput', 'None')" class="px-2 py-0.5 text-[11px] rounded bg-slate-100 hover:bg-teal-50 hover:text-teal-700 text-slate-600 border border-slate-200 transition">None</button>
+                  <button type="button" onclick="setFieldValue('comparativeInput', 'Previous US thyroid dated ')" class="px-2 py-0.5 text-[11px] rounded bg-slate-100 hover:bg-teal-50 hover:text-teal-700 text-slate-600 border border-slate-200 transition">Previous US dated...</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Section 2: General Thyroid Parenchyma, Lobe Measurements & Lymph Nodes -->
+        <section class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+          <div class="bg-slate-50 px-4 py-3 border-b border-slate-200 flex items-center justify-between">
+            <h2 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+              <span class="w-6 h-6 rounded-md bg-teal-100 text-teal-800 flex items-center justify-center text-xs font-bold">2</span>
+              General Thyroid Findings &amp; Measurements
+            </h2>
+            <span id="totalVolumeBadge" class="text-xs font-medium text-teal-700 bg-teal-50 px-2.5 py-0.5 rounded-full border border-teal-200">
+              Est. Total Vol: 36.1 mL
+            </span>
+          </div>
+          <div class="p-4 space-y-4">
+
+            <!-- Parenchyma Select / Custom -->
+            <div>
+              <label for="parenchymaPresetSelect" class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Thyroid Size &amp; Parenchymal Echogenicity</label>
+              <select id="parenchymaPresetSelect" onchange="handleParenchymaPresetChange()" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-teal-500 mb-2">
+                <option value="dual" selected>Template Dual Option (Normal / Enlarged slash line from sample)</option>
+                <option value="enlarged_homo">Enlarged thyroid gland with homogenous echogenicity of parenchyma.</option>
+                <option value="normal_homo">Thyroid gland shows normal size and homogenous echogenicity of parenchyma.</option>
+                <option value="enlarged_hetero">Enlarged thyroid gland with heterogenous parenchymal echogenicity.</option>
+                <option value="normal_hetero">Thyroid gland shows normal size with heterogenous parenchymal echogenicity.</option>
+                <option value="custom">Custom text below...</option>
+              </select>
+              <input id="parenchymaTextInput" type="text" spellcheck="true" value="Thyroid gland shows normal size and homogenous echogenicity of parenchyma. / Enlarged thyroid gland with homogenous echogenicity of parenchyma." oninput="handleFormChange()" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-teal-500" />
+            </div>
+
+            <!-- Lobe Measurements Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3 bg-slate-50 p-3 rounded-xl border border-slate-200">
+              <!-- Right Lobe -->
+              <div class="bg-white p-3 rounded-lg border border-slate-200">
+                <div class="flex items-center justify-between mb-1.5">
+                  <span class="text-xs font-bold text-slate-700">Right Lobe (cm)</span>
+                  <span id="rightVolText" class="text-[11px] text-slate-500">17.4 mL</span>
+                </div>
+                <div class="flex items-center gap-1">
+                  <input id="rightD1" type="number" step="0.1" min="0" value="2.1" oninput="handleFormChange()" aria-label="Right lobe AP dimension" class="w-full text-center rounded border border-slate-300 py-1.5 text-sm font-medium focus:ring-2 focus:ring-teal-500 focus:outline-none" />
+                  <span class="text-slate-400 text-xs">×</span>
+                  <input id="rightD2" type="number" step="0.1" min="0" value="2.7" oninput="handleFormChange()" aria-label="Right lobe Transverse dimension" class="w-full text-center rounded border border-slate-300 py-1.5 text-sm font-medium focus:ring-2 focus:ring-teal-500 focus:outline-none" />
+                  <span class="text-slate-400 text-xs">×</span>
+                  <input id="rightD3" type="number" step="0.1" min="0" value="6.4" oninput="handleFormChange()" aria-label="Right lobe Length dimension" class="w-full text-center rounded border border-slate-300 py-1.5 text-sm font-medium focus:ring-2 focus:ring-teal-500 focus:outline-none" />
+                </div>
+              </div>
+
+              <!-- Left Lobe -->
+              <div class="bg-white p-3 rounded-lg border border-slate-200">
+                <div class="flex items-center justify-between mb-1.5">
+                  <span class="text-xs font-bold text-slate-700">Left Lobe (cm)</span>
+                  <span id="leftVolText" class="text-[11px] text-slate-500">17.5 mL</span>
+                </div>
+                <div class="flex items-center gap-1">
+                  <input id="leftD1" type="number" step="0.1" min="0" value="2.2" oninput="handleFormChange()" aria-label="Left lobe AP dimension" class="w-full text-center rounded border border-slate-300 py-1.5 text-sm font-medium focus:ring-2 focus:ring-teal-500 focus:outline-none" />
+                  <span class="text-slate-400 text-xs">×</span>
+                  <input id="leftD2" type="number" step="0.1" min="0" value="2.4" oninput="handleFormChange()" aria-label="Left lobe Transverse dimension" class="w-full text-center rounded border border-slate-300 py-1.5 text-sm font-medium focus:ring-2 focus:ring-teal-500 focus:outline-none" />
+                  <span class="text-slate-400 text-xs">×</span>
+                  <input id="leftD3" type="number" step="0.1" min="0" value="6.9" oninput="handleFormChange()" aria-label="Left lobe Length dimension" class="w-full text-center rounded border border-slate-300 py-1.5 text-sm font-medium focus:ring-2 focus:ring-teal-500 focus:outline-none" />
+                </div>
+              </div>
+
+              <!-- Isthmus -->
+              <div class="bg-white p-3 rounded-lg border border-slate-200">
+                <div class="flex items-center justify-between mb-1.5">
+                  <label for="isthmusInput" class="text-xs font-bold text-slate-700">Isthmus (cm)</label>
+                  <span class="text-[11px] text-slate-400">Thickness</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <input id="isthmusInput" type="number" step="0.1" min="0" value="0.3" oninput="handleFormChange()" class="w-full text-center rounded border border-slate-300 py-1.5 text-sm font-medium focus:ring-2 focus:ring-teal-500 focus:outline-none" />
+                  <span class="text-xs text-slate-500 whitespace-nowrap">cm AP</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Cervical Lymphadenopathy -->
+            <div>
+              <label for="lymphNodeInput" class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Cervical Lymph Nodes</label>
+              <input id="lymphNodeInput" type="text" spellcheck="true" value="No significant cervical lymphadenopathy." oninput="handleFormChange()" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-500" />
+              <div class="flex flex-wrap gap-1.5 mt-2">
+                <button type="button" onclick="setFieldValue('lymphNodeInput', 'No significant cervical lymphadenopathy.')" class="px-2 py-0.5 text-[11px] rounded bg-slate-100 hover:bg-teal-50 hover:text-teal-700 text-slate-600 border border-slate-200 transition">No significant cervical lymphadenopathy</button>
+                <button type="button" onclick="setFieldValue('lymphNodeInput', 'A few benign-appearing reactive cervical lymph nodes bilaterally.')" class="px-2 py-0.5 text-[11px] rounded bg-slate-100 hover:bg-teal-50 hover:text-teal-700 text-slate-600 border border-slate-200 transition">Reactive lymph nodes</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Section 3: Thyroid Nodules & Automatic ACR TI-RADS Calculator -->
+        <section class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+          <div class="bg-slate-50 px-4 py-3 border-b border-slate-200 flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <h2 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+                <span class="w-6 h-6 rounded-md bg-teal-100 text-teal-800 flex items-center justify-center text-xs font-bold">3</span>
+                Nodules &amp; Automatic ACR TI-RADS Calculator
+              </h2>
+              <p class="text-xs text-slate-500 mt-0.5">
+                Scores update automatically per <a href="https://radiologyassistant.nl/head-neck/ti-rads/ti-rads" target="_blank" rel="noopener noreferrer" class="text-teal-600 underline hover:text-teal-800">The Radiology Assistant ACR TI-RADS</a>
+              </p>
+            </div>
+            <div class="flex items-center gap-2">
+              <button type="button" onclick="addNodule('Right lobe')" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-teal-600 hover:bg-teal-700 text-white shadow-sm transition">
+                + Add Right Nodule
+              </button>
+              <button type="button" onclick="addNodule('Left lobe')" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm transition">
+                + Add Left Nodule
+              </button>
+              <button type="button" onclick="addNodule('Isthmus')" class="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-700 hover:bg-slate-800 text-white shadow-sm transition">
+                + Isthmus
+              </button>
+            </div>
+          </div>
+
+          <!-- Phrasing Style Switch -->
+          <div class="bg-amber-50/70 border-b border-amber-200/80 px-4 py-2.5 flex flex-wrap items-center justify-between gap-2 text-xs">
+            <div class="flex items-center gap-2 text-amber-900">
+              <span class="font-semibold">Nodule Text Style:</span>
+              <span>Choose between exact sample wording (includes original typos like "boarder" to test Spell Check) or clean standardized lexicon.</span>
+            </div>
+            <div class="inline-flex rounded-lg bg-white p-0.5 border border-amber-300">
+              <button type="button" id="styleBtnSample" onclick="setWordingStyle('sample')" class="px-2.5 py-1 rounded-md text-xs font-medium bg-amber-600 text-white transition">
+                Original Sample Wording
+              </button>
+              <button type="button" id="styleBtnClean" onclick="setWordingStyle('clean')" class="px-2.5 py-1 rounded-md text-xs font-medium text-slate-700 hover:bg-slate-100 transition">
+                Standardized Clean Wording
+              </button>
+            </div>
+          </div>
+
+          <!-- Dynamic Nodule Cards Container -->
+          <div id="nodulesContainer" class="p-4 space-y-4"></div>
+        </section>
+
+        <!-- Section 4: Impression Configuration -->
+        <section class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+          <div class="bg-slate-50 px-4 py-3 border-b border-slate-200 flex items-center justify-between">
+            <h2 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+              <span class="w-6 h-6 rounded-md bg-teal-100 text-teal-800 flex items-center justify-center text-xs font-bold">4</span>
+              Impression Builder
+            </h2>
+            <label class="inline-flex items-center gap-2 text-xs font-medium text-slate-700 cursor-pointer">
+              <input id="autoImpressionCheckbox" type="checkbox" checked onchange="handleFormChange()" class="rounded border-slate-300 text-teal-600 focus:ring-teal-500" />
+              Auto-generate Impression from Findings &amp; TI-RADS
+            </label>
+          </div>
+          <div class="p-4 space-y-3">
+            <div class="flex flex-wrap items-center gap-3 text-xs text-slate-600">
+              <span class="font-semibold">Overall Gland Status in Impression:</span>
+              <label class="inline-flex items-center gap-1.5 cursor-pointer">
+                <input type="radio" name="impGlandStatus" value="Enlargement of thyroid gland" checked onchange="handleFormChange()" class="text-teal-600 focus:ring-teal-500" />
+                Enlargement of thyroid gland
+              </label>
+              <label class="inline-flex items-center gap-1.5 cursor-pointer">
+                <input type="radio" name="impGlandStatus" value="Normal-sized thyroid gland" onchange="handleFormChange()" class="text-teal-600 focus:ring-teal-500" />
+                Normal-sized thyroid gland
+              </label>
+            </div>
+            <div>
+              <label for="customImpressionInput" class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Impression Lines (Editable when Auto-generate is unchecked)</label>
+              <textarea id="customImpressionInput" rows="3" spellcheck="true" oninput="handleManualImpressionInput()" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-500"></textarea>
+            </div>
+          </div>
+        </section>
+
+      </div>
+
+      <!-- RIGHT COLUMN: Sticky Report Preview, Copy Controls & Spell Checker (5 cols) -->
+      <div class="lg:col-span-5 lg:sticky lg:top-20 space-y-5">
+
+        <!-- Live Report Preview Card -->
+        <section class="bg-white rounded-xl shadow-md border border-slate-200 overflow-hidden">
+          <div class="bg-slate-900 text-white px-4 py-3 flex flex-wrap items-center justify-between gap-2 no-print">
+            <div class="flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
+              <h2 class="text-sm font-bold tracking-wide">LIVE REPORT PREVIEW</h2>
+            </div>
+            <div class="flex items-center gap-2">
+              <button type="button" onclick="copyReportText('all')" class="px-3.5 py-1.5 rounded-lg text-xs font-bold bg-teal-500 hover:bg-teal-400 text-slate-950 shadow transition flex items-center gap-1.5">
+                <span>Copy Full Report</span>
+              </button>
+              <button type="button" onclick="window.print()" class="px-2.5 py-1.5 rounded-lg text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition">
+                Print
+              </button>
+            </div>
+          </div>
+
+          <!-- Secondary Toolbar: Quick Copy Sections & Manual Edit Toggle -->
+          <div class="bg-slate-100 px-4 py-2 border-b border-slate-200 flex flex-wrap items-center justify-between gap-2 text-xs no-print">
+            <div class="flex items-center gap-1.5">
+              <button type="button" onclick="copyReportText('findings')" class="px-2 py-1 rounded bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 font-medium transition">
+                Copy Findings
+              </button>
+              <button type="button" onclick="copyReportText('impression')" class="px-2 py-1 rounded bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 font-medium transition">
+                Copy Impression
+              </button>
+            </div>
+            <label class="inline-flex items-center gap-1.5 text-slate-700 font-medium cursor-pointer">
+              <input id="manualReportEditToggle" type="checkbox" onchange="toggleManualReportEdit()" class="rounded border-slate-300 text-teal-600 focus:ring-teal-500" />
+              Free-text Edit Mode
+            </label>
+          </div>
+
+          <!-- Formatted Preview / Highlighted Spell-Check View -->
+          <div class="p-4 bg-slate-50/50">
+            <div id="reportPreviewHighlighted" class="report-mono text-xs sm:text-[13px] leading-relaxed whitespace-pre-wrap bg-white p-4 rounded-xl border border-slate-200 text-slate-900 shadow-inner min-h-[420px]"></div>
+            <textarea id="reportManualTextarea" spellcheck="true" rows="20" oninput="runSpellChecker()" class="hidden report-mono text-xs sm:text-[13px] leading-relaxed w-full bg-white p-4 rounded-xl border-2 border-teal-500 text-slate-900 focus:outline-none"></textarea>
+          </div>
+
+          <!-- Quick TI-RADS Nodule Summary Bar -->
+          <div id="noduleSummaryStrip" class="px-4 py-3 bg-slate-50 border-t border-slate-200 flex flex-wrap items-center gap-2 no-print"></div>
+        </section>
+
+        <!-- Spelling & Radiology Terminology Checker Card -->
+        <section class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden no-print">
+          <div class="bg-slate-50 px-4 py-3 border-b border-slate-200 flex flex-wrap items-center justify-between gap-2">
+            <div class="flex items-center gap-2">
+              <h3 class="text-sm font-bold text-slate-800">Spelling &amp; Terminology Check</h3>
+              <span id="spellBadgeCount" class="px-2 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800 border border-amber-300">
+                0 issues
+              </span>
+            </div>
+            <div class="flex items-center gap-2">
+              <label class="inline-flex items-center gap-1 text-[11px] text-slate-600 cursor-pointer" title="ตรวจสอบคำว่า homogenous/heterogenous ให้เป็น homogeneous/heterogeneous ตามพจนานุกรมการแพทย์มาตรฐาน">
+                <input id="strictHomoCheck" type="checkbox" onchange="runSpellChecker()" class="rounded border-slate-300 text-teal-600 focus:ring-teal-500" />
+                Strict "homogeneous" check
+              </label>
+              <button type="button" id="fixAllSpellBtn" onclick="fixAllSpellingIssues()" class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition">
+                Fix All Issues
+              </button>
+            </div>
+          </div>
+
+          <div class="p-4 space-y-3">
+            <div id="spellIssuesList" class="space-y-2 max-h-64 overflow-y-auto"></div>
+          </div>
+        </section>
+
+      </div>
+    </div>
+  </main>
+
+  <!-- VIEW 2: ACR TI-RADS REFERENCE GUIDE -->
+  <section id="viewReference" class="hidden flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6 no-print">
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 space-y-6">
+      <div class="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 pb-4">
+        <div>
+          <h2 class="text-lg font-bold text-slate-900">ACR TI-RADS (Thyroid Imaging Reporting and Data System) Reference</h2>
+          <p class="text-sm text-slate-600 mt-0.5">
+            Grounded in <a href="https://radiologyassistant.nl/head-neck/ti-rads/ti-rads" target="_blank" rel="noopener noreferrer" class="text-teal-600 font-medium underline">The Radiology Assistant: TI-RADS (Habib Ahmad &amp; Aad van der Lugt)</a>
+          </p>
+        </div>
+        <a href="https://radiologyassistant.nl/head-neck/ti-rads/ti-rads" target="_blank" rel="noopener noreferrer" class="px-4 py-2 rounded-lg text-xs font-semibold bg-teal-600 text-white hover:bg-teal-700 transition">
+          Open Radiology Assistant Source ↗
+        </a>
+      </div>
+
+      <!-- 5 Feature Categories Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+        <div class="rounded-xl border border-slate-200 p-4 bg-slate-50">
+          <h3 class="text-xs font-bold uppercase tracking-wider text-teal-800 mb-2">1. Composition</h3>
+          <p class="text-[11px] text-slate-500 mb-3">Choose 1 (Cystic/Spongiform = automatic TR-1, 0 pts total)</p>
+          <ul class="space-y-2 text-xs">
+            <li class="flex justify-between"><span>Cystic / almost cystic</span><span class="font-bold">0 pt</span></li>
+            <li class="flex justify-between"><span>Spongiform (&ge;50%)</span><span class="font-bold">0 pt</span></li>
+            <li class="flex justify-between"><span>Mixed cystic &amp; solid</span><span class="font-bold">1 pt</span></li>
+            <li class="flex justify-between"><span>Solid (&ge;95% solid)</span><span class="font-bold">2 pts</span></li>
+          </ul>
+        </div>
+
+        <div class="rounded-xl border border-slate-200 p-4 bg-slate-50">
+          <h3 class="text-xs font-bold uppercase tracking-wider text-teal-800 mb-2">2. Echogenicity</h3>
+          <p class="text-[11px] text-slate-500 mb-3">Choose 1 (vs. normal parenchyma; very hypoechoic vs. strap muscle)</p>
+          <ul class="space-y-2 text-xs">
+            <li class="flex justify-between"><span>Anechoic</span><span class="font-bold">0 pt</span></li>
+            <li class="flex justify-between"><span>Hyperechoic / Isoechoic</span><span class="font-bold">1 pt</span></li>
+            <li class="flex justify-between"><span>Cannot be assessed</span><span class="font-bold">1 pt</span></li>
+            <li class="flex justify-between"><span>Hypoechoic</span><span class="font-bold">2 pts</span></li>
+            <li class="flex justify-between"><span>Very hypoechoic</span><span class="font-bold">3 pts</span></li>
+          </ul>
+        </div>
+
+        <div class="rounded-xl border border-slate-200 p-4 bg-slate-50">
+          <h3 class="text-xs font-bold uppercase tracking-wider text-teal-800 mb-2">3. Shape (Axial)</h3>
+          <p class="text-[11px] text-slate-500 mb-3">Choose 1 (Assessed in transverse/axial plane)</p>
+          <ul class="space-y-2 text-xs">
+            <li class="flex justify-between"><span>Wider-than-tall</span><span class="font-bold">0 pt</span></li>
+            <li class="flex justify-between"><span>Taller-than-wide</span><span class="font-bold">3 pts</span></li>
+          </ul>
+        </div>
+
+        <div class="rounded-xl border border-slate-200 p-4 bg-slate-50">
+          <h3 class="text-xs font-bold uppercase tracking-wider text-teal-800 mb-2">4. Margin</h3>
+          <p class="text-[11px] text-slate-500 mb-3">Choose 1 (Best evaluated on anterior aspect)</p>
+          <ul class="space-y-2 text-xs">
+            <li class="flex justify-between"><span>Smooth</span><span class="font-bold">0 pt</span></li>
+            <li class="flex justify-between"><span>Ill-defined</span><span class="font-bold">0 pt</span></li>
+            <li class="flex justify-between"><span>Lobulated or irregular</span><span class="font-bold">2 pts</span></li>
+            <li class="flex justify-between"><span>Extrathyroidal extension</span><span class="font-bold">3 pts</span></li>
+          </ul>
+        </div>
+
+        <div class="rounded-xl border border-slate-200 p-4 bg-slate-50">
+          <h3 class="text-xs font-bold uppercase tracking-wider text-teal-800 mb-2">5. Echogenic Foci</h3>
+          <p class="text-[11px] text-slate-500 mb-3">Check all that apply (Additive points!)</p>
+          <ul class="space-y-2 text-xs">
+            <li class="flex justify-between"><span>None / Large comet-tail (&gt;1mm)</span><span class="font-bold">0 pt</span></li>
+            <li class="flex justify-between"><span>Macrocalcifications</span><span class="font-bold">1 pt</span></li>
+            <li class="flex justify-between"><span>Peripheral (rim) calc.</span><span class="font-bold">2 pts</span></li>
+            <li class="flex justify-between"><span>Punctate / Microcalc. (&lt;1mm)</span><span class="font-bold">3 pts</span></li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Risk Categories & Management Table -->
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse text-xs sm:text-sm">
+          <thead>
+            <tr class="bg-slate-100 text-slate-700 border-b border-slate-200">
+              <th class="py-2.5 px-3 font-bold">Category</th>
+              <th class="py-2.5 px-3 font-bold">Total Points</th>
+              <th class="py-2.5 px-3 font-bold">Description</th>
+              <th class="py-2.5 px-3 font-bold">Malignancy Risk</th>
+              <th class="py-2.5 px-3 font-bold">FNA Threshold</th>
+              <th class="py-2.5 px-3 font-bold">Follow-up Threshold</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-200">
+            <tr>
+              <td class="py-2.5 px-3 font-bold text-emerald-700">TR-1</td>
+              <td class="py-2.5 px-3">0 points</td>
+              <td class="py-2.5 px-3">Benign</td>
+              <td class="py-2.5 px-3">0.3%</td>
+              <td class="py-2.5 px-3">No FNA</td>
+              <td class="py-2.5 px-3">No follow-up required</td>
+            </tr>
+            <tr>
+              <td class="py-2.5 px-3 font-bold text-teal-700">TR-2</td>
+              <td class="py-2.5 px-3">2 points</td>
+              <td class="py-2.5 px-3">Not Suspicious</td>
+              <td class="py-2.5 px-3">1.5%</td>
+              <td class="py-2.5 px-3">No FNA</td>
+              <td class="py-2.5 px-3">No follow-up required</td>
+            </tr>
+            <tr>
+              <td class="py-2.5 px-3 font-bold text-amber-700">TR-3</td>
+              <td class="py-2.5 px-3">3 points</td>
+              <td class="py-2.5 px-3">Mildly Suspicious</td>
+              <td class="py-2.5 px-3">4.8%</td>
+              <td class="py-2.5 px-3 font-semibold">&ge; 2.5 cm</td>
+              <td class="py-2.5 px-3">&ge; 1.5 cm (1, 3, and 5 years)</td>
+            </tr>
+            <tr>
+              <td class="py-2.5 px-3 font-bold text-orange-700">TR-4</td>
+              <td class="py-2.5 px-3">4 – 6 points</td>
+              <td class="py-2.5 px-3">Moderately Suspicious</td>
+              <td class="py-2.5 px-3">9.1%</td>
+              <td class="py-2.5 px-3 font-semibold">&ge; 1.5 cm</td>
+              <td class="py-2.5 px-3">&ge; 1.0 cm (1, 2, 3, and 5 years)</td>
+            </tr>
+            <tr>
+              <td class="py-2.5 px-3 font-bold text-rose-700">TR-5</td>
+              <td class="py-2.5 px-3">&ge; 7 points</td>
+              <td class="py-2.5 px-3">Highly Suspicious</td>
+              <td class="py-2.5 px-3">35.0%</td>
+              <td class="py-2.5 px-3 font-semibold">&ge; 1.0 cm</td>
+              <td class="py-2.5 px-3">&ge; 0.5 cm (Annual for up to 5 years)</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs text-slate-600 bg-slate-50 p-4 rounded-xl border border-slate-200">
+        <div>
+          <h4 class="font-bold text-slate-800 mb-1">Multiple Nodules Rule (ACR TI-RADS)</h4>
+          <p>When multiple nodules are present, no more than 4 nodules with the highest TI-RADS scores should be classified/followed, and FNA is not recommended for more than 2 nodules.</p>
+        </div>
+        <div>
+          <h4 class="font-bold text-slate-800 mb-1">Sub-5mm Nodules &amp; Significant Growth</h4>
+          <p>Nodules &lt; 5 mm (0.5 cm) require no follow-up even if classified as TR-5. Significant growth is defined as &ge; 20% increase in at least two nodule dimensions (minimum 2 mm) or &ge; 50% increase in volume.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- VIEW 3: STANDALONE WEBSITE SOURCE CODE -->
+  <section id="viewCode" class="hidden flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6 no-print">
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 space-y-4">
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 class="text-base font-bold text-slate-900">Complete Standalone Website Code (`index.html`)</h2>
+          <p class="text-xs text-slate-500">Save this code as an `.html` file to run the Thyroid Ultrasound Reporting Website on any computer or hospital intranet.</p>
+        </div>
+        <button type="button" onclick="copyWebsiteSourceCode()" class="px-4 py-2 rounded-lg text-xs font-bold bg-teal-600 hover:bg-teal-700 text-white shadow transition">
+          Copy Website HTML Code
+        </button>
+      </div>
+      <textarea id="websiteSourceTextarea" readonly rows="22" class="w-full report-mono text-xs bg-slate-950 text-slate-100 p-4 rounded-xl border border-slate-800 focus:outline-none"></textarea>
+    </div>
+  </section>
+
+  <script>
+    // =========================================================================
+    // STATE & DATA MODEL
+    // =========================================================================
+    let currentWordingStyle = 'sample'; // 'sample' preserves user prompt phrasing (including boarder); 'clean' standardizes wording
+
+    const INITIAL_SAMPLE_NODULES = [
+      {
+        id: 'nodule_1',
+        label: 'M1',
+        lobe: 'Right lobe',
+        pole: 'lower pole',
+        d1: 1.6,
+        d2: 1.3,
+        d3: 2.0,
+        composition: 'solid', // 'cystic' (0), 'spongiform' (0), 'mixed' (1), 'solid' (2)
+        internalTexture: 'heterogenous', // '', 'homogenous', 'heterogenous'
+        echogenicity: 'hypoechoic', // 'anechoic' (0), 'isoechoic' (1), 'hyperechoic' (1), 'cannot_assess' (1), 'hypoechoic' (2), 'very_hypoechoic' (3)
+        echoCustomPhrase: 'hypo-to-hyperechoic', // preserves M1 sample 'hypo-to-hyperechoic' while scoring 2 pts
+        shape: 'taller', // 'wider' (0), 'taller' (3)
+        margin: 'smooth', // 'smooth' (0), 'ill_defined' (0), 'lobulated' (2), 'irregular' (2), 'extrathyroidal' (3)
+        fociMacro: true, // +1
+        fociRim: false,  // +2
+        fociPunctate: false, // +3
+        fociComet: false, // 0
+        customOverrideText: ''
+      },
+      {
+        id: 'nodule_2',
+        label: 'M2',
+        lobe: 'Right lobe',
+        pole: 'middle pole',
+        d1: 1.3,
+        d2: 1.5,
+        d3: 3.4,
+        composition: 'solid',
+        internalTexture: 'heterogenous',
+        echogenicity: 'hypoechoic',
+        echoCustomPhrase: 'hypoechoic',
+        shape: 'wider',
+        margin: 'lobulated',
+        fociMacro: true,
+        fociRim: false,
+        fociPunctate: false,
+        fociComet: false,
+        customOverrideText: ''
+      },
+      {
+        id: 'nodule_3',
+        label: 'M3',
+        lobe: 'Left lobe',
+        pole: 'lower pole',
+        d1: 1.6,
+        d2: 1.4,
+        d3: 2.0,
+        composition: 'mixed',
+        internalTexture: 'heterogenous',
+        echogenicity: 'hypoechoic',
+        echoCustomPhrase: 'low echoic',
+        shape: 'wider',
+        margin: 'none_stated', // 0 pts
+        fociMacro: false,
+        fociRim: false,
+        fociPunctate: false,
+        fociComet: false,
+        customOverrideText: ''
+      },
+      {
+        id: 'nodule_4',
+        label: 'M4',
+        lobe: 'Left lobe',
+        pole: 'mid pole',
+        d1: 1.5,
+        d2: 1.5,
+        d3: 2.6,
+        composition: 'solid',
+        internalTexture: 'heterogenous',
+        echogenicity: 'hypoechoic',
+        echoCustomPhrase: 'hypoechoic',
+        shape: 'wider',
+        margin: 'smooth',
+        fociMacro: true,
+        fociRim: false,
+        fociPunctate: false,
+        fociComet: false,
+        customOverrideText: ''
+      }
+    ];
+
+    let nodules = JSON.parse(JSON.stringify(INITIAL_SAMPLE_NODULES));
+    let lastDetectedSpellIssues = [];
+
+    // =========================================================================
+    // ACR TI-RADS SCORING ENGINE (Reference: The Radiology Assistant)
+    // =========================================================================
+    function calculateTiRads(nodule) {
+      // Composition
+      let compPts = 0;
+      if (nodule.composition === 'cystic' || nodule.composition === 'spongiform') {
+        compPts = 0;
+        // Per ACR TI-RADS & Radiology Assistant: purely cystic or spongiform nodules are inherently benign (TR-1, 0 pts total)
+        const maxDim = Math.max(Number(nodule.d1) || 0, Number(nodule.d2) || 0, Number(nodule.d3) || 0);
+        return {
+          compPts: 0,
+          echoPts: 0,
+          shapePts: 0,
+          marginPts: 0,
+          fociPts: 0,
+          totalPoints: 0,
+          trLevel: 'TR-1',
+          trNumber: 1,
+          categoryName: 'Benign',
+          malignancyRisk: '0.3%',
+          maxDim: maxDim,
+          fnaRecommended: false,
+          followUpRecommended: false,
+          recommendationText: 'No FNA or follow-up US required (benign composition)'
+        };
+      } else if (nodule.composition === 'mixed') {
+        compPts = 1;
+      } else if (nodule.composition === 'solid') {
+        compPts = 2;
+      }
+
+      // Echogenicity
+      let echoPts = 0;
+      if (nodule.echogenicity === 'anechoic') echoPts = 0;
+      else if (nodule.echogenicity === 'isoechoic' || nodule.echogenicity === 'hyperechoic' || nodule.echogenicity === 'cannot_assess') echoPts = 1;
+      else if (nodule.echogenicity === 'hypoechoic') echoPts = 2;
+      else if (nodule.echogenicity === 'very_hypoechoic') echoPts = 3;
+
+      // Shape (axial plane)
+      const shapePts = nodule.shape === 'taller' ? 3 : 0;
+
+      // Margin
+      let marginPts = 0;
+      if (nodule.margin === 'smooth' || nodule.margin === 'ill_defined' || nodule.margin === 'none_stated') marginPts = 0;
+      else if (nodule.margin === 'lobulated' || nodule.margin === 'irregular') marginPts = 2;
+      else if (nodule.margin === 'extrathyroidal') marginPts = 3;
+
+      // Echogenic Foci (additive!)
+      let fociPts = 0;
+      if (nodule.fociMacro) fociPts += 1;
+      if (nodule.fociRim) fociPts += 2;
+      if (nodule.fociPunctate) fociPts += 3;
+
+      const totalPoints = compPts + echoPts + shapePts + marginPts + fociPts;
+
+      let trLevel = 'TR-1';
+      let trNumber = 1;
+      let categoryName = 'Benign';
+      let malignancyRisk = '0.3%';
+
+      if (totalPoints === 0 || totalPoints === 1) {
+        trLevel = 'TR-1';
+        trNumber = 1;
+        categoryName = 'Benign';
+        malignancyRisk = '0.3%';
+      } else if (totalPoints === 2) {
+        trLevel = 'TR-2';
+        trNumber = 2;
+        categoryName = 'Not Suspicious';
+        malignancyRisk = '1.5%';
+      } else if (totalPoints === 3) {
+        trLevel = 'TR-3';
+        trNumber = 3;
+        categoryName = 'Mildly Suspicious';
+        malignancyRisk = '4.8%';
+      } else if (totalPoints >= 4 && totalPoints <= 6) {
+        trLevel = 'TR-4';
+        trNumber = 4;
+        categoryName = 'Moderately Suspicious';
+        malignancyRisk = '9.1%';
+      } else {
+        trLevel = 'TR-5';
+        trNumber = 5;
+        categoryName = 'Highly Suspicious';
+        malignancyRisk = '35%';
+      }
+
+      const maxDim = Math.max(Number(nodule.d1) || 0, Number(nodule.d2) || 0, Number(nodule.d3) || 0);
+      let fnaRecommended = false;
+      let followUpRecommended = false;
+      let recommendationText = 'No FNA or follow-up US required';
+
+      if (maxDim < 0.5) {
+        recommendationText = 'No follow-up required (< 5 mm)';
+      } else if (trNumber === 3) {
+        if (maxDim >= 2.5) {
+          fnaRecommended = true;
+          recommendationText = 'FNA recommended (TR-3 ≥ 2.5 cm)';
+        } else if (maxDim >= 1.5) {
+          followUpRecommended = true;
+          recommendationText = 'Follow-up US at 1, 3, 5 yrs (TR-3 ≥ 1.5 cm)';
+        } else {
+          recommendationText = 'No FNA or follow-up (< 1.5 cm)';
+        }
+      } else if (trNumber === 4) {
+        if (maxDim >= 1.5) {
+          fnaRecommended = true;
+          recommendationText = 'FNA recommended (TR-4 ≥ 1.5 cm)';
+        } else if (maxDim >= 1.0) {
+          followUpRecommended = true;
+          recommendationText = 'Follow-up US at 1, 2, 3, 5 yrs (TR-4 ≥ 1.0 cm)';
+        } else {
+          recommendationText = 'No FNA or follow-up (< 1.0 cm)';
+        }
+      } else if (trNumber === 5) {
+        if (maxDim >= 1.0) {
+          fnaRecommended = true;
+          recommendationText = 'FNA recommended (TR-5 ≥ 1.0 cm)';
+        } else if (maxDim >= 0.5) {
+          followUpRecommended = true;
+          recommendationText = 'Annual follow-up US for up to 5 yrs (TR-5 ≥ 0.5 cm)';
+        }
+      }
+
+      return {
+        compPts,
+        echoPts,
+        shapePts,
+        marginPts,
+        fociPts,
+        totalPoints,
+        trLevel,
+        trNumber,
+        categoryName,
+        malignancyRisk,
+        maxDim,
+        fnaRecommended,
+        followUpRecommended,
+        recommendationText
+      };
+    }
+
+    // =========================================================================
+    // NODULE SENTENCE GENERATOR (Matches User Prompt Template)
+    // =========================================================================
+    function generateNoduleSentence(nodule) {
+      if (nodule.customOverrideText && nodule.customOverrideText.trim() !== '') {
+        return nodule.customOverrideText.trim();
+      }
+
+      const calc = calculateTiRads(nodule);
+      const sizeStr = `${nodule.d1}x${nodule.d2}x${nodule.d3} cm`;
+      const borderWord = currentWordingStyle === 'sample' ? 'boarder' : 'border';
+
+      // Build foci phrase
+      const fociList = [];
+      if (nodule.fociMacro) {
+        // In user sample, M2 has "macrocalcification" and M1/M4 have "macrocalcifications"
+        if (currentWordingStyle === 'sample' && nodule.label === 'M2') {
+          fociList.push('macrocalcification');
+        } else {
+          fociList.push('macrocalcifications');
+        }
+      }
+      if (nodule.fociRim) fociList.push('peripheral rim calcifications');
+      if (nodule.fociPunctate) fociList.push('punctate echogenic foci (microcalcifications)');
+      if (nodule.fociComet) fociList.push('large comet-tail artifacts');
+
+      // Margin phrase
+      let marginPhrase = '';
+      if (nodule.margin === 'smooth') marginPhrase = `smooth ${borderWord}`;
+      else if (nodule.margin === 'ill_defined') marginPhrase = `ill-defined ${borderWord}`;
+      else if (nodule.margin === 'lobulated') marginPhrase = `lobulated ${borderWord}`;
+      else if (nodule.margin === 'irregular') marginPhrase = `irregular ${borderWord}`;
+      else if (nodule.margin === 'extrathyroidal') marginPhrase = 'extrathyroidal extension';
+
+      // Echogenicity phrase
+      let echoPhrase = nodule.echoCustomPhrase || '';
+      if (!echoPhrase) {
+        if (nodule.echogenicity === 'anechoic') echoPhrase = 'anechoic';
+        else if (nodule.echogenicity === 'isoechoic') echoPhrase = 'isoechoic';
+        else if (nodule.echogenicity === 'hyperechoic') echoPhrase = 'hyperechoic';
+        else if (nodule.echogenicity === 'cannot_assess') echoPhrase = 'indeterminate-echogenicity';
+        else if (nodule.echogenicity === 'hypoechoic') echoPhrase = 'hypoechoic';
+        else if (nodule.echogenicity === 'very_hypoechoic') echoPhrase = 'markedly hypoechoic';
+      }
+
+      const tex = nodule.internalTexture ? `${nodule.internalTexture} ` : '';
+
+      // Special handling for Mixed Cystic-Solid like M3 in user sample
+      if (nodule.composition === 'mixed') {
+        const lobeSuffix = (currentWordingStyle === 'sample' && nodule.label === 'M3')
+          ? ` of ${nodule.lobe.toLowerCase()}`
+          : '';
+        let extras = [];
+        if (fociList.length > 0) extras.push(fociList.join(' and '));
+        if (marginPhrase) extras.push(marginPhrase);
+        const withClause = extras.length > 0 ? ` with ${extras.join(' and ')}` : '';
+        const shapeStr = nodule.shape === 'taller' ? ' Taller-than-wide.' : '';
+        return `- ${nodule.label}: A mixed-cystic solid lesion with ${tex}${echoPhrase} nodule${withClause} at ${nodule.pole}${lobeSuffix}, size ${sizeStr}.${shapeStr} ${calc.trLevel}.`;
+      }
+
+      if (nodule.composition === 'cystic') {
+        return `- ${nodule.label}: A cystic lesion at ${nodule.pole}, size ${sizeStr}. ${calc.trLevel}.`;
+      }
+
+      if (nodule.composition === 'spongiform') {
+        return `- ${nodule.label}: A spongiform nodule at ${nodule.pole}, size ${sizeStr}. ${calc.trLevel}.`;
+      }
+
+      // Solid composition (like M1, M2, M4)
+      const withParts = [];
+      if (fociList.length > 0) withParts.push(fociList.join(' and '));
+      if (marginPhrase) withParts.push(marginPhrase);
+      const withStr = withParts.length > 0 ? ` with ${withParts.join(' and ')}` : '';
+
+      const shapeStr = nodule.shape === 'taller' ? ' Taller-than-wide.' : '';
+
+      if (currentWordingStyle === 'sample' && nodule.label === 'M1') {
+        return `- ${nodule.label}: A solid ${tex}${echoPhrase} nodule${withStr} at ${nodule.pole} , size ${sizeStr}.${shapeStr} ${calc.trLevel}.`;
+      }
+      if (currentWordingStyle === 'sample' && nodule.label === 'M2') {
+        return `- ${nodule.label}: A solid ${tex}${echoPhrase} nodule${withStr} at ${nodule.pole}. size ${sizeStr}.${shapeStr} ${calc.trLevel}.`;
+      }
+
+      return `- ${nodule.label}: A solid ${tex}${echoPhrase} nodule${withStr} at ${nodule.pole}, size ${sizeStr}.${shapeStr} ${calc.trLevel}.`;
+    }
+
+    // =========================================================================
+    // RENDER NODULE CARDS
+    // =========================================================================
+    function renderNoduleCards() {
+      const container = document.getElementById('nodulesContainer');
+      if (!container) return;
+
+      if (nodules.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-8 bg-slate-50 rounded-xl border border-dashed border-slate-300">
+            <p class="text-sm font-medium text-slate-600">No thyroid nodules added (Normal homogenous gland).</p>
+            <p class="text-xs text-slate-400 mt-1">Click "+ Add Right Nodule" or "+ Add Left Nodule" above to evaluate a nodule with ACR TI-RADS.</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = nodules.map((n, idx) => {
+        const calc = calculateTiRads(n);
+        const badgeColors = {
+          1: 'bg-emerald-100 text-emerald-800 border-emerald-300',
+          2: 'bg-teal-100 text-teal-800 border-teal-300',
+          3: 'bg-amber-100 text-amber-800 border-amber-300',
+          4: 'bg-orange-100 text-orange-800 border-orange-300',
+          5: 'bg-rose-100 text-rose-800 border-rose-300'
+        };
+        const badgeClass = badgeColors[calc.trNumber] || badgeColors[1];
+
+        return `
+          <div class="rounded-xl border border-slate-200 bg-slate-50/60 overflow-hidden shadow-sm">
+            <!-- Card Header -->
+            <div class="bg-white px-4 py-2.5 border-b border-slate-200 flex flex-wrap items-center justify-between gap-2">
+              <div class="flex items-center gap-2">
+                <input type="text" value="${escapeHtml(n.label)}" onchange="updateNoduleField(${idx}, 'label', this.value)" aria-label="Nodule ID" class="w-14 text-center font-bold text-xs rounded-md border border-slate-300 py-1 bg-slate-50 text-slate-800" />
+                <select onchange="updateNoduleField(${idx}, 'lobe', this.value)" aria-label="Nodule Lobe" class="rounded-md border border-slate-300 py-1 px-2 text-xs font-semibold bg-white text-slate-800">
+                  <option value="Right lobe" ${n.lobe === 'Right lobe' ? 'selected' : ''}>Right lobe</option>
+                  <option value="Left lobe" ${n.lobe === 'Left lobe' ? 'selected' : ''}>Left lobe</option>
+                  <option value="Isthmus" ${n.lobe === 'Isthmus' ? 'selected' : ''}>Isthmus</option>
+                </select>
+                <select onchange="updateNoduleField(${idx}, 'pole', this.value)" aria-label="Nodule Pole" class="rounded-md border border-slate-300 py-1 px-2 text-xs bg-white text-slate-700">
+                  <option value="upper pole" ${n.pole === 'upper pole' ? 'selected' : ''}>upper pole</option>
+                  <option value="middle pole" ${n.pole === 'middle pole' ? 'selected' : ''}>middle pole</option>
+                  <option value="mid pole" ${n.pole === 'mid pole' ? 'selected' : ''}>mid pole</option>
+                  <option value="lower pole" ${n.pole === 'lower pole' ? 'selected' : ''}>lower pole</option>
+                  <option value="isthmus" ${n.pole === 'isthmus' ? 'selected' : ''}>isthmus</option>
+                </select>
+              </div>
+
+              <!-- Live TI-RADS Score Badge -->
+              <div class="flex items-center gap-2">
+                <span class="px-2.5 py-1 rounded-full text-xs font-bold border ${badgeClass}">
+                  ${calc.trLevel} (${calc.totalPoints} pts • Risk ${calc.malignancyRisk})
+                </span>
+                <span class="hidden sm:inline-block text-[11px] font-medium px-2 py-0.5 rounded ${calc.fnaRecommended ? 'bg-rose-600 text-white' : 'bg-slate-200 text-slate-700'}">
+                  ${calc.recommendationText}
+                </span>
+                <button type="button" onclick="removeNodule(${idx})" class="text-slate-400 hover:text-rose-600 px-1.5 py-0.5 text-xs font-bold transition" title="Remove nodule">
+                  ✕
+                </button>
+              </div>
+            </div>
+
+            <!-- Card Body: Size & 5 ACR TI-RADS Categories -->
+            <div class="p-3.5 space-y-3">
+              <!-- Row 1: Size & Texture -->
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div class="bg-white p-2.5 rounded-lg border border-slate-200">
+                  <label class="block text-[11px] font-bold text-slate-600 uppercase mb-1">Size (cm) — Max: ${calc.maxDim.toFixed(1)} cm</label>
+                  <div class="flex items-center gap-1">
+                    <input type="number" step="0.1" min="0" value="${n.d1}" oninput="updateNoduleField(${idx}, 'd1', this.value)" aria-label="Dimension 1" class="w-full text-center rounded border border-slate-300 py-1 text-xs font-semibold" />
+                    <span class="text-slate-400 text-xs">×</span>
+                    <input type="number" step="0.1" min="0" value="${n.d2}" oninput="updateNoduleField(${idx}, 'd2', this.value)" aria-label="Dimension 2" class="w-full text-center rounded border border-slate-300 py-1 text-xs font-semibold" />
+                    <span class="text-slate-400 text-xs">×</span>
+                    <input type="number" step="0.1" min="0" value="${n.d3}" oninput="updateNoduleField(${idx}, 'd3', this.value)" aria-label="Dimension 3" class="w-full text-center rounded border border-slate-300 py-1 text-xs font-semibold" />
+                  </div>
+                </div>
+
+                <div class="bg-white p-2.5 rounded-lg border border-slate-200">
+                  <label class="block text-[11px] font-bold text-slate-600 uppercase mb-1">1. Composition (${calc.compPts} pt)</label>
+                  <select onchange="updateNoduleField(${idx}, 'composition', this.value)" aria-label="Composition" class="w-full rounded border border-slate-300 py-1 px-2 text-xs bg-white">
+                    <option value="cystic" ${n.composition === 'cystic' ? 'selected' : ''}>Cystic / almost cystic (0 pt → TR1)</option>
+                    <option value="spongiform" ${n.composition === 'spongiform' ? 'selected' : ''}>Spongiform ≥50% (0 pt → TR1)</option>
+                    <option value="mixed" ${n.composition === 'mixed' ? 'selected' : ''}>Mixed cystic and solid (1 pt)</option>
+                    <option value="solid" ${n.composition === 'solid' ? 'selected' : ''}>Solid / almost completely solid (2 pts)</option>
+                  </select>
+                </div>
+
+                <div class="bg-white p-2.5 rounded-lg border border-slate-200">
+                  <label class="block text-[11px] font-bold text-slate-600 uppercase mb-1">2. Echogenicity (${calc.echoPts} pt)</label>
+                  <select onchange="updateNoduleEcho(${idx}, this.value)" aria-label="Echogenicity" class="w-full rounded border border-slate-300 py-1 px-2 text-xs bg-white">
+                    <option value="anechoic" ${n.echogenicity === 'anechoic' ? 'selected' : ''}>Anechoic (0 pt)</option>
+                    <option value="isoechoic" ${n.echogenicity === 'isoechoic' ? 'selected' : ''}>Isoechoic / Hyperechoic (1 pt)</option>
+                    <option value="cannot_assess" ${n.echogenicity === 'cannot_assess' ? 'selected' : ''}>Cannot be assessed (1 pt)</option>
+                    <option value="hypoechoic" ${n.echogenicity === 'hypoechoic' && n.echoCustomPhrase !== 'hypo-to-hyperechoic' && n.echoCustomPhrase !== 'low echoic' ? 'selected' : ''}>Hypoechoic (2 pts)</option>
+                    <option value="hypo_to_hyper" ${n.echoCustomPhrase === 'hypo-to-hyperechoic' ? 'selected' : ''}>Hypo-to-hyperechoic (2 pts - M1 style)</option>
+                    <option value="low_echoic" ${n.echoCustomPhrase === 'low echoic' ? 'selected' : ''}>Low echoic (2 pts - M3 style)</option>
+                    <option value="very_hypoechoic" ${n.echogenicity === 'very_hypoechoic' ? 'selected' : ''}>Very hypoechoic &lt; strap muscle (3 pts)</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Row 2: Shape, Margin, Echogenic Foci -->
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div class="bg-white p-2.5 rounded-lg border border-slate-200">
+                  <label class="block text-[11px] font-bold text-slate-600 uppercase mb-1">3. Shape - Axial (${calc.shapePts} pt)</label>
+                  <select onchange="updateNoduleField(${idx}, 'shape', this.value)" aria-label="Shape" class="w-full rounded border border-slate-300 py-1 px-2 text-xs bg-white">
+                    <option value="wider" ${n.shape === 'wider' ? 'selected' : ''}>Wider-than-tall (0 pt)</option>
+                    <option value="taller" ${n.shape === 'taller' ? 'selected' : ''}>Taller-than-wide (3 pts)</option>
+                  </select>
+                </div>
+
+                <div class="bg-white p-2.5 rounded-lg border border-slate-200">
+                  <label class="block text-[11px] font-bold text-slate-600 uppercase mb-1">4. Margin (${calc.marginPts} pt)</label>
+                  <select onchange="updateNoduleField(${idx}, 'margin', this.value)" aria-label="Margin" class="w-full rounded border border-slate-300 py-1 px-2 text-xs bg-white">
+                    <option value="smooth" ${n.margin === 'smooth' ? 'selected' : ''}>Smooth border (0 pt)</option>
+                    <option value="ill_defined" ${n.margin === 'ill_defined' ? 'selected' : ''}>Ill-defined border (0 pt)</option>
+                    <option value="none_stated" ${n.margin === 'none_stated' ? 'selected' : ''}>Not stated in text (0 pt)</option>
+                    <option value="lobulated" ${n.margin === 'lobulated' ? 'selected' : ''}>Lobulated border (2 pts)</option>
+                    <option value="irregular" ${n.margin === 'irregular' ? 'selected' : ''}>Irregular / angulated (2 pts)</option>
+                    <option value="extrathyroidal" ${n.margin === 'extrathyroidal' ? 'selected' : ''}>Extrathyroidal extension (3 pts)</option>
+                  </select>
+                </div>
+
+                <div class="bg-white p-2.5 rounded-lg border border-slate-200">
+                  <label class="block text-[11px] font-bold text-slate-600 uppercase mb-1">5. Echogenic Foci (+${calc.fociPts} pt, additive)</label>
+                  <div class="grid grid-cols-2 gap-1 text-[11px]">
+                    <label class="inline-flex items-center gap-1 cursor-pointer">
+                      <input type="checkbox" ${n.fociMacro ? 'checked' : ''} onchange="updateNoduleField(${idx}, 'fociMacro', this.checked)" class="rounded text-teal-600" />
+                      <span>Macrocalc (+1)</span>
+                    </label>
+                    <label class="inline-flex items-center gap-1 cursor-pointer">
+                      <input type="checkbox" ${n.fociRim ? 'checked' : ''} onchange="updateNoduleField(${idx}, 'fociRim', this.checked)" class="rounded text-teal-600" />
+                      <span>Rim calc (+2)</span>
+                    </label>
+                    <label class="inline-flex items-center gap-1 cursor-pointer">
+                      <input type="checkbox" ${n.fociPunctate ? 'checked' : ''} onchange="updateNoduleField(${idx}, 'fociPunctate', this.checked)" class="rounded text-teal-600" />
+                      <span>Punctate (+3)</span>
+                    </label>
+                    <label class="inline-flex items-center gap-1 cursor-pointer">
+                      <input type="checkbox" ${n.fociComet ? 'checked' : ''} onchange="updateNoduleField(${idx}, 'fociComet', this.checked)" class="rounded text-teal-600" />
+                      <span>Comet &gt;1mm (0)</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Generated Nodule Line Preview & Custom Override -->
+              <div class="bg-white px-3 py-2 rounded-lg border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div class="text-xs text-slate-700 report-mono break-words flex-1">
+                  ${escapeHtml(generateNoduleSentence(n))}
+                </div>
+                <div class="flex items-center gap-1.5 shrink-0">
+                  <select onchange="updateNoduleField(${idx}, 'internalTexture', this.value)" aria-label="Internal echo texture" class="rounded border border-slate-200 px-1.5 py-0.5 text-[11px] text-slate-600 bg-slate-50">
+                    <option value="heterogenous" ${n.internalTexture === 'heterogenous' ? 'selected' : ''}>Texture: heterogenous</option>
+                    <option value="heterogeneous" ${n.internalTexture === 'heterogeneous' ? 'selected' : ''}>Texture: heterogeneous</option>
+                    <option value="homogenous" ${n.internalTexture === 'homogenous' ? 'selected' : ''}>Texture: homogenous</option>
+                    <option value="" ${n.internalTexture === '' ? 'selected' : ''}>No texture prefix</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // =========================================================================
+    // FULL REPORT ASSEMBLER
+    // =========================================================================
+    function buildFullReportText() {
+      const title = (document.getElementById('reportTitleInput')?.value || 'ULTRASOUND OF THYROID GLAND').trim();
+      const history = (document.getElementById('historyInput')?.value || 'None').trim();
+      const comparative = (document.getElementById('comparativeInput')?.value || 'None').trim();
+      const parenchyma = (document.getElementById('parenchymaTextInput')?.value || '').trim();
+
+      const r1 = document.getElementById('rightD1')?.value || '0';
+      const r2 = document.getElementById('rightD2')?.value || '0';
+      const r3 = document.getElementById('rightD3')?.value || '0';
+
+      const l1 = document.getElementById('leftD1')?.value || '0';
+      const l2 = document.getElementById('leftD2')?.value || '0';
+      const l3 = document.getElementById('leftD3')?.value || '0';
+
+      const isthmus = document.getElementById('isthmusInput')?.value || '0';
+      const lymph = (document.getElementById('lymphNodeInput')?.value || 'No significant cervical lymphadenopathy.').trim();
+
+      // Update volume badges (Ellipsoid formula: L * W * D * 0.479)
+      const rVol = (parseFloat(r1) * parseFloat(r2) * parseFloat(r3) * 0.479) || 0;
+      const lVol = (parseFloat(l1) * parseFloat(l2) * parseFloat(l3) * 0.479) || 0;
+      const totalVol = rVol + lVol;
+      const rightVolEl = document.getElementById('rightVolText');
+      const leftVolEl = document.getElementById('leftVolText');
+      const totalVolEl = document.getElementById('totalVolumeBadge');
+      if (rightVolEl) rightVolEl.textContent = `${rVol.toFixed(1)} mL`;
+      if (leftVolEl) leftVolEl.textContent = `${lVol.toFixed(1)} mL`;
+      if (totalVolEl) totalVolEl.textContent = `Est. Total Vol: ${totalVol.toFixed(1)} mL`;
+
+      const findingsLines = [
+        `- ${parenchyma}`,
+        `- Right lobe is measured about ${r1}x${r2}x${r3} cm in size.`,
+        `- Left lobe is measured about ${l1}x${l2}x${l3} cm in size.`,
+        `- Isthmus is about ${isthmus} cm in thickness.`,
+        `- ${lymph}`
+      ];
+
+      // Group nodules by lobe
+      const rightNodules = nodules.filter(n => n.lobe === 'Right lobe');
+      const leftNodules = nodules.filter(n => n.lobe === 'Left lobe');
+      const isthmusNodules = nodules.filter(n => n.lobe === 'Isthmus');
+
+      let noduleSections = '';
+      if (rightNodules.length > 0) {
+        noduleSections += `\n\nRight lobe:\n` + rightNodules.map(generateNoduleSentence).join('\n');
+      }
+      if (leftNodules.length > 0) {
+        noduleSections += `\n\nLeft lobe:\n` + leftNodules.map(generateNoduleSentence).join('\n');
+      }
+      if (isthmusNodules.length > 0) {
+        noduleSections += `\n\nIsthmus:\n` + isthmusNodules.map(generateNoduleSentence).join('\n');
+      }
+
+      // Build Impression
+      const autoImp = document.getElementById('autoImpressionCheckbox')?.checked;
+      let impressionBlock = '';
+      if (autoImp) {
+        const glandStatusRadio = document.querySelector('input[name="impGlandStatus"]:checked');
+        const glandPhrase = glandStatusRadio ? glandStatusRadio.value : 'Enlargement of thyroid gland';
+
+        if (nodules.length === 0) {
+          impressionBlock = `- ${glandPhrase} without discrete thyroid nodule.\n- ${lymph}`;
+        } else {
+          // Determine FNA candidates per ACR TI-RADS (sort by highest points, then size; recommend FNA for up to 2 nodules)
+          const scored = nodules.map(n => ({ nodule: n, calc: calculateTiRads(n) }));
+          const fnaCandidates = scored
+            .filter(item => item.calc.fnaRecommended)
+            .sort((a, b) => (b.calc.totalPoints - a.calc.totalPoints) || (b.calc.maxDim - a.calc.maxDim));
+
+          // Per ACR TI-RADS & Radiology Assistant: FNA is not recommended for more than 2 nodules
+          const topFna = fnaCandidates.slice(0, 2);
+
+          let fnaSentence = '';
+          if (topFna.length > 0) {
+            const labels = topFna.map(x => x.nodule.label);
+            const lobes = [...new Set(topFna.map(x => x.nodule.lobe.toLowerCase()))];
+            const labelJoin = labels.join(' or ');
+            const lobePhrase = lobes.length === 1 ? ` at the ${lobes[0]}` : '';
+            fnaSentence = ` FNA is recommended in ${topFna.length > 1 ? 'nodules' : 'nodule'} (${labelJoin})${lobePhrase}.`;
+          } else {
+            const followUpCandidates = scored.filter(item => item.calc.followUpRecommended);
+            if (followUpCandidates.length > 0) {
+              const fuLabels = followUpCandidates.slice(0, 4).map(x => x.nodule.label).join(', ');
+              fnaSentence = ` Follow-up ultrasound is recommended for ${fuLabels}.`;
+            }
+          }
+
+          const multText = nodules.length > 1 ? 'with multiple nodules as described.' : 'with a thyroid nodule as described.';
+          impressionBlock = `- ${glandPhrase} ${multText}${fnaSentence}\n- ${lymph}`;
+        }
+
+        const customImpEl = document.getElementById('customImpressionInput');
+        if (customImpEl) customImpEl.value = impressionBlock;
+      } else {
+        impressionBlock = (document.getElementById('customImpressionInput')?.value || '').trim();
+      }
+
+      return `${title}\n\nHISTORY: ${history}\n\nCOMPARATIVE STUDY: ${comparative}\n\nFINDINGS:\n${findingsLines.join('\n')}${noduleSections}\n\nIMPRESSION:\n${impressionBlock}`;
+    }
+
+    // =========================================================================
+    // MEDICAL & RADIOLOGY SPELLING / TERMINOLOGY CHECKER
+    // =========================================================================
+    const SPELL_RULES = [
+      {
+        id: 'boarder_typo',
+        regex: /\bboarder(s)?\b/gi,
+        severity: 'error',
+        title: '"boarder" → "border"',
+        reason: 'Medical terminology: "border" (ขอบเขตของก้อน) ไม่ใช่ "boarder" (ผู้เช่าพัก)',
+        replacement: (match) => match.toLowerCase().endsWith('s') ? 'borders' : 'border'
+      },
+      {
+        id: 'space_before_comma',
+        regex: /\s+,/g,
+        severity: 'warn',
+        title: 'Space before comma (" ,")',
+        reason: 'Formatting: มีเว้นวรรคเกินหน้าเครื่องหมายจุลภาค (เช่น "at lower pole , size")',
+        replacement: () => ','
+      },
+      {
+        id: 'period_before_size',
+        regex: /\.\s+size\b/g,
+        severity: 'warn',
+        title: '". size" → ", size"',
+        reason: 'Punctuation: ใช้เครื่องหมายจุลภาคคั่นก่อนระบุขนาดก้อน (เช่น "at middle pole, size")',
+        replacement: () => ', size'
+      },
+      {
+        id: 'parenchyma_typo',
+        regex: /\b(paranchyma|parenchima|parencyma)\b/gi,
+        severity: 'error',
+        title: 'Misspelled "parenchyma"',
+        reason: 'Correct spelling: parenchyma',
+        replacement: () => 'parenchyma'
+      },
+      {
+        id: 'isthmus_typo',
+        regex: /\b(isthums|istmus|isthmas)\b/gi,
+        severity: 'error',
+        title: 'Misspelled "isthmus"',
+        reason: 'Correct spelling: isthmus',
+        replacement: () => 'isthmus'
+      },
+      {
+        id: 'hypoechoic_typo',
+        regex: /\b(hypoehoic|hypoechoc|hypoechoi)\b/gi,
+        severity: 'error',
+        title: 'Misspelled "hypoechoic"',
+        reason: 'Correct spelling: hypoechoic',
+        replacement: () => 'hypoechoic'
+      },
+      {
+        id: 'hyperechoic_typo',
+        regex: /\b(hyperehoic|hyperechoc)\b/gi,
+        severity: 'error',
+        title: 'Misspelled "hyperechoic"',
+        reason: 'Correct spelling: hyperechoic',
+        replacement: () => 'hyperechoic'
+      },
+      {
+        id: 'calcification_typo',
+        regex: /\b(calcifcation|calcificaton|macrocalcifcation)(s)?\b/gi,
+        severity: 'error',
+        title: 'Misspelled "calcification"',
+        reason: 'Correct spelling: calcification / macrocalcification',
+        replacement: (m) => m.toLowerCase().startsWith('macro')
+          ? (m.toLowerCase().endsWith('s') ? 'macrocalcifications' : 'macrocalcification')
+          : (m.toLowerCase().endsWith('s') ? 'calcifications' : 'calcification')
+      },
+      {
+        id: 'lymphadenopathy_typo',
+        regex: /\b(lymphadenopahy|lymphadenopaty|lymphaenopathy)\b/gi,
+        severity: 'error',
+        title: 'Misspelled "lymphadenopathy"',
+        reason: 'Correct spelling: lymphadenopathy',
+        replacement: () => 'lymphadenopathy'
+      },
+      {
+        id: 'thyroid_typo',
+        regex: /\b(thryoid|thyriod|tyroid)\b/gi,
+        severity: 'error',
+        title: 'Misspelled "thyroid"',
+        reason: 'Correct spelling: thyroid',
+        replacement: () => 'thyroid'
+      }
+    ];
+
+    const STRICT_HOMO_RULES = [
+      {
+        id: 'homogenous_variant',
+        regex: /\bhomogenous\b/gi,
+        severity: 'warn',
+        title: '"homogenous" → "homogeneous"',
+        reason: 'Standard medical dictionary prefers "homogeneous" (with "e")',
+        replacement: () => 'homogeneous'
+      },
+      {
+        id: 'heterogenous_variant',
+        regex: /\bheterogenous\b/gi,
+        severity: 'warn',
+        title: '"heterogenous" → "heterogeneous"',
+        reason: 'Standard medical dictionary prefers "heterogeneous" (with "e")',
+        replacement: () => 'heterogeneous'
+      }
+    ];
+
+    function getActiveReportText() {
+      const isManual = document.getElementById('manualReportEditToggle')?.checked;
+      const textarea = document.getElementById('reportManualTextarea');
+      if (isManual && textarea) {
+        return textarea.value;
+      }
+      return buildFullReportText();
+    }
+
+    function runSpellChecker() {
+      const rawText = getActiveReportText();
+      const strictHomo = document.getElementById('strictHomoCheck')?.checked;
+      const activeRules = strictHomo ? [...SPELL_RULES, ...STRICT_HOMO_RULES] : SPELL_RULES;
+
+      const issues = [];
+      activeRules.forEach(rule => {
+        const matches = [...rawText.matchAll(rule.regex)];
+        if (matches.length > 0) {
+          issues.push({
+            ruleId: rule.id,
+            title: rule.title,
+            reason: rule.reason,
+            severity: rule.severity,
+            count: matches.length
+          });
+        }
+      });
+
+      lastDetectedSpellIssues = issues;
+
+      // Update badge count
+      const totalCount = issues.reduce((acc, item) => acc + item.count, 0);
+      const badgeEl = document.getElementById('spellBadgeCount');
+      const fixAllBtn = document.getElementById('fixAllSpellBtn');
+      if (badgeEl) {
+        if (totalCount === 0) {
+          badgeEl.textContent = '✓ No issues found';
+          badgeEl.className = 'px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-300';
+        } else {
+          badgeEl.textContent = `${totalCount} issue${totalCount > 1 ? 's' : ''} detected`;
+          badgeEl.className = 'px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800 border border-amber-300';
+        }
+      }
+      if (fixAllBtn) {
+        fixAllBtn.disabled = totalCount === 0;
+        fixAllBtn.className = totalCount === 0
+          ? 'px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-200 text-slate-400 cursor-not-allowed'
+          : 'px-2.5 py-1 rounded-lg text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition';
+      }
+
+      // Render issue cards
+      const listEl = document.getElementById('spellIssuesList');
+      if (listEl) {
+        if (issues.length === 0) {
+          listEl.innerHTML = `
+            <div class="flex items-center gap-2 text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2.5">
+              <span class="font-bold">✓ All clear!</span>
+              <span>ไม่พบคำสะกดผิดหรือจุดวรรคตอนที่ผิดปกติในรายงานนี้</span>
+            </div>
+          `;
+        } else {
+          listEl.innerHTML = issues.map(item => `
+            <div class="flex items-start justify-between gap-2 p-2.5 rounded-lg border ${item.severity === 'error' ? 'bg-rose-50/70 border-rose-200' : 'bg-amber-50/70 border-amber-200'}">
+              <div class="text-xs">
+                <div class="flex items-center gap-1.5">
+                  <span class="font-bold ${item.severity === 'error' ? 'text-rose-800' : 'text-amber-900'}">${escapeHtml(item.title)}</span>
+                  <span class="px-1.5 py-0.2 rounded bg-white text-[10px] font-semibold border border-slate-200 text-slate-600">×${item.count}</span>
+                </div>
+                <p class="text-[11px] text-slate-600 mt-0.5">${escapeHtml(item.reason)}</p>
+              </div>
+              <button type="button" onclick="applySingleSpellRule('${item.ruleId}')" class="shrink-0 px-2.5 py-1 rounded-md text-xs font-semibold bg-white hover:bg-slate-100 text-slate-800 border border-slate-300 shadow-sm transition">
+                Fix
+              </button>
+            </div>
+          `).join('');
+        }
+      }
+
+      // Update highlighted preview
+      renderHighlightedPreview(rawText, activeRules);
+    }
+
+    function renderHighlightedPreview(rawText, activeRules) {
+      const previewEl = document.getElementById('reportPreviewHighlighted');
+      if (!previewEl) return;
+
+      let html = escapeHtml(rawText);
+      activeRules.forEach(rule => {
+        const cls = rule.severity === 'error' ? 'spell-error' : 'spell-warn';
+        html = html.replace(rule.regex, (match) => `<mark class="${cls}" title="${escapeHtml(rule.title)}">${match}</mark>`);
+      });
+      previewEl.innerHTML = html;
+    }
+
+    function applySingleSpellRule(ruleId) {
+      const strictHomo = document.getElementById('strictHomoCheck')?.checked;
+      const allRules = [...SPELL_RULES, ...STRICT_HOMO_RULES];
+      const rule = allRules.find(r => r.id === ruleId);
+      if (!rule) return;
+
+      const isManual = document.getElementById('manualReportEditToggle')?.checked;
+      if (isManual) {
+        const textarea = document.getElementById('reportManualTextarea');
+        if (textarea) {
+          textarea.value = textarea.value.replace(rule.regex, rule.replacement);
+        }
+      } else {
+        // If fixing boarder_typo, space_before_comma, or period_before_size, switch wording style to 'clean'
+        if (ruleId === 'boarder_typo' || ruleId === 'space_before_comma' || ruleId === 'period_before_size') {
+          setWordingStyle('clean');
+        }
+        // Also sanitize text inputs
+        ['reportTitleInput', 'historyInput', 'comparativeInput', 'parenchymaTextInput', 'lymphNodeInput', 'customImpressionInput'].forEach(id => {
+          const el = document.getElementById(id);
+          if (el && el.value) {
+            el.value = el.value.replace(rule.regex, rule.replacement);
+          }
+        });
+        if (ruleId === 'heterogenous_variant') {
+          nodules.forEach(n => {
+            if (n.internalTexture === 'heterogenous') n.internalTexture = 'heterogeneous';
+          });
+        }
+        if (ruleId === 'homogenous_variant') {
+          nodules.forEach(n => {
+            if (n.internalTexture === 'homogenous') n.internalTexture = 'homogeneous';
+          });
+        }
+      }
+
+      handleFormChange();
+      showToast(`Fixed: ${rule.title}`);
+    }
+
+    function fixAllSpellingIssues() {
+      const isManual = document.getElementById('manualReportEditToggle')?.checked;
+      const strictHomo = document.getElementById('strictHomoCheck')?.checked;
+      const activeRules = strictHomo ? [...SPELL_RULES, ...STRICT_HOMO_RULES] : SPELL_RULES;
+
+      if (isManual) {
+        const textarea = document.getElementById('reportManualTextarea');
+        if (textarea) {
+          let text = textarea.value;
+          activeRules.forEach(rule => {
+            text = text.replace(rule.regex, rule.replacement);
+          });
+          textarea.value = text;
+        }
+      } else {
+        setWordingStyle('clean');
+        ['reportTitleInput', 'historyInput', 'comparativeInput', 'parenchymaTextInput', 'lymphNodeInput', 'customImpressionInput'].forEach(id => {
+          const el = document.getElementById(id);
+          if (el && el.value) {
+            let val = el.value;
+            activeRules.forEach(rule => {
+              val = val.replace(rule.regex, rule.replacement);
+            });
+            el.value = val;
+          }
+        });
+        if (strictHomo) {
+          nodules.forEach(n => {
+            if (n.internalTexture === 'heterogenous') n.internalTexture = 'heterogeneous';
+            if (n.internalTexture === 'homogenous') n.internalTexture = 'homogeneous';
+          });
+        }
+      }
+
+      handleFormChange();
+      showToast('All detected spelling & punctuation issues fixed!');
+    }
+
+    // =========================================================================
+    // INTERACTIVE HANDLERS
+    // =========================================================================
+    function handleFormChange() {
+      renderNoduleCards();
+      const fullText = buildFullReportText();
+      const isManual = document.getElementById('manualReportEditToggle')?.checked;
+      const textarea = document.getElementById('reportManualTextarea');
+      if (!isManual && textarea) {
+        textarea.value = fullText;
+      }
+      renderNoduleSummaryStrip();
+      runSpellChecker();
+    }
+
+    function renderNoduleSummaryStrip() {
+      const strip = document.getElementById('noduleSummaryStrip');
+      if (!strip) return;
+      if (nodules.length === 0) {
+        strip.innerHTML = `<span class="text-xs text-slate-500">No nodules currently listed.</span>`;
+        return;
+      }
+      strip.innerHTML = nodules.map(n => {
+        const c = calculateTiRads(n);
+        const bg = c.trNumber >= 5 ? 'bg-rose-100 text-rose-800 border-rose-300'
+          : c.trNumber === 4 ? 'bg-orange-100 text-orange-800 border-orange-300'
+          : c.trNumber === 3 ? 'bg-amber-100 text-amber-800 border-amber-300'
+          : 'bg-emerald-100 text-emerald-800 border-emerald-300';
+        return `<span class="px-2.5 py-1 rounded-md text-xs font-semibold border ${bg}">${escapeHtml(n.label)} (${escapeHtml(n.lobe.replace(' lobe', ''))}): ${c.trLevel} (${c.totalPoints} pts) ${c.fnaRecommended ? '• FNA' : ''}</span>`;
+      }).join('');
+    }
+
+    function setFieldValue(fieldId, value) {
+      const el = document.getElementById(fieldId);
+      if (el) {
+        el.value = value;
+        handleFormChange();
+      }
+    }
+
+    function handleParenchymaPresetChange() {
+      const preset = document.getElementById('parenchymaPresetSelect')?.value;
+      const input = document.getElementById('parenchymaTextInput');
+      if (!input) return;
+
+      if (preset === 'dual') {
+        input.value = 'Thyroid gland shows normal size and homogenous echogenicity of parenchyma. / Enlarged thyroid gland with homogenous echogenicity of parenchyma.';
+      } else if (preset === 'enlarged_homo') {
+        input.value = 'Enlarged thyroid gland with homogenous echogenicity of parenchyma.';
+        const r = document.querySelector('input[name="impGlandStatus"][value="Enlargement of thyroid gland"]');
+        if (r) r.checked = true;
+      } else if (preset === 'normal_homo') {
+        input.value = 'Thyroid gland shows normal size and homogenous echogenicity of parenchyma.';
+        const r = document.querySelector('input[name="impGlandStatus"][value="Normal-sized thyroid gland"]');
+        if (r) r.checked = true;
+      } else if (preset === 'enlarged_hetero') {
+        input.value = 'Enlarged thyroid gland with heterogenous echogenicity of parenchyma.';
+      } else if (preset === 'normal_hetero') {
+        input.value = 'Thyroid gland shows normal size with heterogenous echogenicity of parenchyma.';
+      }
+      handleFormChange();
+    }
+
+    function setWordingStyle(style) {
+      currentWordingStyle = style;
+      const btnSample = document.getElementById('styleBtnSample');
+      const btnClean = document.getElementById('styleBtnClean');
+      if (btnSample && btnClean) {
+        if (style === 'sample') {
+          btnSample.className = 'px-2.5 py-1 rounded-md text-xs font-medium bg-amber-600 text-white transition';
+          btnClean.className = 'px-2.5 py-1 rounded-md text-xs font-medium text-slate-700 hover:bg-slate-100 transition';
+        } else {
+          btnClean.className = 'px-2.5 py-1 rounded-md text-xs font-medium bg-teal-600 text-white transition';
+          btnSample.className = 'px-2.5 py-1 rounded-md text-xs font-medium text-slate-700 hover:bg-slate-100 transition';
+        }
+      }
+      handleFormChange();
+    }
+
+    function updateNoduleField(idx, field, val) {
+      if (!nodules[idx]) return;
+      nodules[idx][field] = val;
+      handleFormChange();
+    }
+
+    function updateNoduleEcho(idx, val) {
+      if (!nodules[idx]) return;
+      if (val === 'hypo_to_hyper') {
+        nodules[idx].echogenicity = 'hypoechoic';
+        nodules[idx].echoCustomPhrase = 'hypo-to-hyperechoic';
+      } else if (val === 'low_echoic') {
+        nodules[idx].echogenicity = 'hypoechoic';
+        nodules[idx].echoCustomPhrase = 'low echoic';
+      } else {
+        nodules[idx].echogenicity = val;
+        nodules[idx].echoCustomPhrase = '';
+      }
+      handleFormChange();
+    }
+
+    function addNodule(lobe) {
+      const nextNum = nodules.length + 1;
+      nodules.push({
+        id: 'nodule_' + Date.now(),
+        label: 'M' + nextNum,
+        lobe: lobe,
+        pole: lobe === 'Isthmus' ? 'isthmus' : 'mid pole',
+        d1: 1.2,
+        d2: 1.1,
+        d3: 1.5,
+        composition: 'solid',
+        internalTexture: 'heterogenous',
+        echogenicity: 'hypoechoic',
+        echoCustomPhrase: 'hypoechoic',
+        shape: 'wider',
+        margin: 'smooth',
+        fociMacro: false,
+        fociRim: false,
+        fociPunctate: false,
+        fociComet: false,
+        customOverrideText: ''
+      });
+      handleFormChange();
+      showToast(`Added M${nextNum} (${lobe})`);
+    }
+
+    function removeNodule(idx) {
+      nodules.splice(idx, 1);
+      // Re-index M1, M2...
+      nodules.forEach((n, i) => {
+        if (/^M\d+$/.test(n.label)) {
+          n.label = 'M' + (i + 1);
+        }
+      });
+      handleFormChange();
+    }
+
+    function handleManualImpressionInput() {
+      const autoImp = document.getElementById('autoImpressionCheckbox');
+      if (autoImp) autoImp.checked = false;
+      handleFormChange();
+    }
+
+    function toggleManualReportEdit() {
+      const isManual = document.getElementById('manualReportEditToggle')?.checked;
+      const previewDiv = document.getElementById('reportPreviewHighlighted');
+      const textarea = document.getElementById('reportManualTextarea');
+      if (!previewDiv || !textarea) return;
+
+      if (isManual) {
+        textarea.value = buildFullReportText();
+        previewDiv.classList.add('hidden');
+        textarea.classList.remove('hidden');
+        textarea.focus();
+      } else {
+        previewDiv.classList.remove('hidden');
+        textarea.classList.add('hidden');
+        handleFormChange();
+      }
+    }
+
+    function loadSampleCase() {
+      document.getElementById('reportTitleInput').value = 'ULTRASOUND OF THYROID GLAND';
+      document.getElementById('historyInput').value = 'Hyperparathyroidism.';
+      document.getElementById('comparativeInput').value = 'None';
+      document.getElementById('parenchymaPresetSelect').value = 'dual';
+      document.getElementById('parenchymaTextInput').value = 'Thyroid gland shows normal size and homogenous echogenicity of parenchyma. / Enlarged thyroid gland with homogenous echogenicity of parenchyma.';
+      document.getElementById('rightD1').value = '2.1';
+      document.getElementById('rightD2').value = '2.7';
+      document.getElementById('rightD3').value = '6.4';
+      document.getElementById('leftD1').value = '2.2';
+      document.getElementById('leftD2').value = '2.4';
+      document.getElementById('leftD3').value = '6.9';
+      document.getElementById('isthmusInput').value = '0.3';
+      document.getElementById('lymphNodeInput').value = 'No significant cervical lymphadenopathy.';
+      document.getElementById('autoImpressionCheckbox').checked = true;
+      const r = document.querySelector('input[name="impGlandStatus"][value="Enlargement of thyroid gland"]');
+      if (r) r.checked = true;
+      nodules = JSON.parse(JSON.stringify(INITIAL_SAMPLE_NODULES));
+      setWordingStyle('sample');
+      showToast('Loaded Sample Report (M1–M4)');
+    }
+
+    function loadNormalTemplate() {
+      document.getElementById('reportTitleInput').value = 'ULTRASOUND OF THYROID GLAND';
+      document.getElementById('historyInput').value = 'Check-up.';
+      document.getElementById('comparativeInput').value = 'None';
+      document.getElementById('parenchymaPresetSelect').value = 'normal_homo';
+      document.getElementById('parenchymaTextInput').value = 'Thyroid gland shows normal size and homogenous echogenicity of parenchyma.';
+      document.getElementById('rightD1').value = '1.5';
+      document.getElementById('rightD2').value = '1.6';
+      document.getElementById('rightD3').value = '4.5';
+      document.getElementById('leftD1').value = '1.4';
+      document.getElementById('leftD2').value = '1.5';
+      document.getElementById('leftD3').value = '4.4';
+      document.getElementById('isthmusInput').value = '0.2';
+      document.getElementById('lymphNodeInput').value = 'No significant cervical lymphadenopathy.';
+      document.getElementById('autoImpressionCheckbox').checked = true;
+      const r = document.querySelector('input[name="impGlandStatus"][value="Normal-sized thyroid gland"]');
+      if (r) r.checked = true;
+      nodules = [];
+      setWordingStyle('clean');
+      showToast('Loaded Normal Thyroid Template');
+    }
+
+    // =========================================================================
+    // COPY TO CLIPBOARD & TABS
+    // =========================================================================
+    function copyTextToClipboard(text, label) {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(() => {
+          showToast(`Copied ${label} to clipboard!`);
+        }).catch(() => {
+          fallbackCopy(text, label);
+        });
+      } else {
+        fallbackCopy(text, label);
+      }
+    }
+
+    function fallbackCopy(text, label) {
+      const temp = document.createElement('textarea');
+      temp.value = text;
+      temp.style.position = 'fixed';
+      temp.style.left = '-9999px';
+      document.body.appendChild(temp);
+      temp.select();
+      try {
+        document.execCommand('copy');
+        showToast(`Copied ${label} to clipboard!`);
+      } catch (err) {
+        showToast('Press Ctrl+C / Cmd+C to copy');
+      }
+      document.body.removeChild(temp);
+    }
+
+    function copyReportText(section) {
+      const full = getActiveReportText();
+      if (section === 'all') {
+        copyTextToClipboard(full, 'Full Report');
+      } else if (section === 'findings') {
+        const fMatch = full.split('FINDINGS:\n')[1];
+        const fOnly = fMatch ? fMatch.split('\n\nIMPRESSION:')[0] : full;
+        copyTextToClipboard('FINDINGS:\n' + fOnly, 'FINDINGS section');
+      } else if (section === 'impression') {
+        const iMatch = full.split('IMPRESSION:\n')[1];
+        copyTextToClipboard('IMPRESSION:\n' + (iMatch || ''), 'IMPRESSION section');
+      }
+    }
+
+    function copyWebsiteSourceCode() {
+      const codeEl = document.getElementById('websiteSourceTextarea');
+      if (codeEl) {
+        copyTextToClipboard(codeEl.value, 'Website HTML Source Code');
+      }
+    }
+
+    function switchMainTab(tab) {
+      const views = {
+        workspace: document.getElementById('viewWorkspace'),
+        reference: document.getElementById('viewReference'),
+        code: document.getElementById('viewCode')
+      };
+      const btns = {
+        workspace: document.getElementById('tabBtnWorkspace'),
+        reference: document.getElementById('tabBtnReference'),
+        code: document.getElementById('tabBtnCode')
+      };
+
+      Object.keys(views).forEach(k => {
+        if (views[k]) {
+          if (k === tab) views[k].classList.remove('hidden');
+          else views[k].classList.add('hidden');
+        }
+        if (btns[k]) {
+          if (k === tab) {
+            btns[k].className = 'px-3 py-1.5 rounded-md text-xs font-medium transition bg-teal-600 text-white shadow-sm';
+          } else {
+            btns[k].className = 'px-3 py-1.5 rounded-md text-xs font-medium transition text-slate-300 hover:text-white';
+          }
+        }
+      });
+
+      if (tab === 'code') {
+        const srcEl = document.getElementById('websiteSourceTextarea');
+        if (srcEl) {
+          srcEl.value = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+        }
+      }
+    }
+
+    let toastTimer = null;
+    function showToast(msg) {
+      const banner = document.getElementById('toastBanner');
+      const textEl = document.getElementById('toastMessage');
+      if (!banner || !textEl) return;
+      textEl.textContent = msg;
+      banner.classList.remove('hidden');
+      if (toastTimer) clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => {
+        banner.classList.add('hidden');
+      }, 2600);
+    }
+
+    function escapeHtml(str) {
+      return String(str || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    // Initialize on load
+    window.addEventListener('DOMContentLoaded', () => {
+      handleFormChange();
+    });
+  </script>
+</body>
+</html>
